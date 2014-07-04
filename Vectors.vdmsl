@@ -1,0 +1,88 @@
+/*
+  Vectors.vdmsl
+  
+  Copyright (c) George Burton 2013
+  
+  This file is released under the terms of the GNU General Public
+  License Version 3 or any later version. For full terms of the
+  license, please see http://www.gnu.org/copyleft/gpl.html, or
+  the included License.md file. 
+ */
+
+module Vectors
+exports all
+imports
+  from MATH
+    functions
+      sqrt : real -> real,
+  from Prelude
+    functions
+      foldl[@T1, @T2]: (@T1 * @T2 -> @T1) * @T1 * seq of @T2 -> @T1
+      repeat[@T]: @T * nat +> seq of @T
+
+definitions
+  types
+    Vector = seq of real
+    inv v == len v > 0;
+
+    Vector2 = Vector
+    inv v == len v = 2;
+
+    Vector3 = Vector
+    inv v == len v = 3;
+
+    Vector4 = Vector
+    inv v == len v = 4;
+
+  values
+    XUnitVec2: Vector2 = [1, 0];
+    YUnitVec2: Vector2 = [0, 1];
+
+    XUnitVec3: Vector3 = [1, 0, 0];
+    YUnitVec3: Vector3 = [0, 1, 0];
+    ZUnitVec3: Vector3 = [0, 0, 1];
+
+  functions
+    zero_vec_of_len: nat1 +> Vector
+    zero_vec_of_len(l) == Prelude`repeat[real](0, l);
+
+    magnitude: Vector +> real
+    magnitude(v) == MATH`sqrt(magnitude_squared(v));
+
+    -- For faster calculations where precision doesn't matter
+    magnitude_squared: Vector +> real
+    magnitude_squared(v) == Prelude`foldl[real, real](lambda x: real, y: real & x + y,
+                                                      0,
+                                                      [x ** 2 | x in set elems v]);
+
+    normalize: Vector -> Vector
+    normalize(v) == [x / magnitude(v) | x in set elems v]
+    pre magnitude(v) > 0.001; -- to avoid zero/infinite values
+
+    vec_is_unit: Vector -> bool
+    vec_is_unit(v) == forall x in set elems v & x <= 1; 
+
+    dot: Vector * Vector -> real
+    dot(a, b) == Prelude`foldl[real, real](lambda x: real, y: real & x + y,
+                                           0,
+                                           [a(z) * b(z) | z in set inds a])
+    pre len a = len b;
+
+    cross: Vector3 * Vector3 -> Vector3
+    cross(a, b) == [a(2) * b(3), a(3) * b(1), a(1) * b(2)];
+
+    subtract: Vector * Vector -> Vector
+    subtract(a, b) == [a(x) - b(x) | x in set inds a]
+    pre len a = len b;
+
+    add: Vector * Vector -> Vector
+    add(a, b) == [a(x) + b(x) | x in set inds a]
+    pre len a = len b;
+
+    multiply: Vector * real -> Vector
+    multiply(v, s) == [x * s | x in set elems v]; 
+    
+    divide: Vector * real -> Vector
+    divide(v, s) == [x / s | x in set elems v];
+end Vectors
+
